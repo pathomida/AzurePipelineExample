@@ -12,3 +12,5 @@
 - [Azure Resource Manager](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/overview)
 - [ARM Template](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview)
 - [ARM Template Creation via VS Code](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/quickstart-create-templates-use-visual-studio-code?tabs=CLI)
+- [Synapse Deployment ARM Example](https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.synapse/synapse-poc/azuredeploy.json)
+- [Azure Synapse Analytics](https://learn.microsoft.com/en-us/azure/synapse-analytics/)

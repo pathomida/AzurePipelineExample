@@ -2,29 +2,171 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "storageAccountName ": {
-        "type": "string",
-        "metadata": {
-            "description": "Storage Account Name"
+        "workSpaceName": {
+            "type": "String"
         },
-        "minLength" : 5,
-        "maxLength" : 24 
-    }},
+        "location": {
+            "type": "String"
+        },
+        "defaultDataLakeStorageAccountName": {
+            "type": "String"
+        },
+        "defaultDataLakeStorageFilesystemName": {
+            "type": "String"
+        },
+        "sqlAdministratorLogin": {
+            "type": "String"
+        },
+        "sqlAdministratorLoginPassword": {
+            "defaultValue": "",
+            "type": "SecureString"
+        },
+        "sparkPoolName":{
+            "type": "string"
+        },
+        "sparkNodeSize": {
+            "type": "string",
+            "defaultValue": "Small",
+            "allowedValues": [
+                "Small",
+                "Medium",
+                "Large"
+            ],
+            "metadata": {
+                "description": "This parameter will determine the node size if SparkDeployment is true"
+            }
+        },
+        "sparkDeployment": {
+        "type": "string",
+        "defaultValue": "true",
+        "allowedValues": [
+            "true",
+            "false"
+        ],
+        "metadata": {
+            "description": "'True' deploys an Apache Spark pool as well as a SQL pool. 'False' does not deploy an Apache Spark pool."
+            }
+        }
+    },
     "functions": [],
-    "variables": {},
+        "variables": {
+                    "defaultDataLakeStorageAccountUrl": "[concat('https://', parameters('defaultDataLakeStorageAccountName'), '.dfs.core.windows.net')]",
+                    "workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workSpaceName'))]"
+    },
     "resources": [{
-        "name": "[parameters('storageAccountName ')]",
+        "name": "[parameters('defaultDataLakeStorageAccountName')]",
         "type": "Microsoft.Storage/storageAccounts",
         "apiVersion": "2021-04-01",
         "tags": {
             "displayName": "storageaccount1"
         },
-        "location": "[resourceGroup().location]",
+        "location": "[parameters('location')]",
         "kind": "StorageV2",
         "sku": {
-            "name": "Premium_LRS",
-            "tier": "Premium"
+            "name": "Standard_LRS"
+        },
+        "properties": {
+        "accessTier": "Hot",
+        "supportsHttpsTrafficOnly": true,
+        "isHnsEnabled": true
+        },
+        "resources": [
+        {
+          "name": "[concat('default/', parameters('defaultDataLakeStorageFilesystemName'))]",
+          "type": "blobServices/containers",
+          "apiVersion": "2022-05-01",
+          "dependsOn": [
+            "[parameters('defaultDataLakeStorageAccountName')]"
+          ],
+          "properties": {
+            "publicAccess": "None"
+          }
         }
-    }],
+      ]
+    },
+
+    {
+        "type": "Microsoft.Synapse/workspaces",
+        "apiVersion": "2021-06-01",
+        "name": "[parameters('workSpaceName')]",
+        "location": "[parameters('location')]",
+        "identity": {"type": "SystemAssigned"},
+        "dependsOn": [
+            "[concat('Microsoft.Storage/storageAccounts/', parameters('defaultDataLakeStorageAccountName'))]",
+            "[parameters('defaultDataLakeStorageFilesystemName')]"
+        ],
+        "properties": {
+        "defaultDataLakeStorage": {
+            "accountUrl": "[variables('defaultDataLakeStorageAccountUrl')]",
+            "filesystem": "[parameters('defaultDataLakeStorageFilesystemName')]"
+        },
+        "sqlAdministratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "sqlAdministratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+        "managedVirtualNetwork": "default"
+        }
+    },
+    {
+      "condition": "[equals(parameters('sparkDeployment'),'true')]",
+      "type": "Microsoft.Synapse/workspaces/bigDataPools",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[concat(parameters('workSpaceName'), '/', parameters('sparkPoolName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('workSpaceName')]"
+      ],
+      "properties": {
+        "nodeCount": 3,
+        "nodeSizeFamily": "MemoryOptimized",
+        "nodeSize": "[parameters('sparkNodeSize')]",
+        "autoScale": {
+          "enabled": true,
+          "minNodeCount": 3,
+          "maxNodeCount": 6
+        },
+        "autoPause": {
+          "enabled": true,
+          "delayInMinutes": 5
+        },
+        "sparkVersion": "2.4"
+      }
+    },
+		{
+			"name": "[concat(parameters('workSpaceName'), '/WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[variables('defaultDataLakeStorageAccountUrl')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workSpaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2021-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			}
+		}
+    ],
     "outputs": {}
 }
