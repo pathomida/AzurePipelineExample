@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "East US" 
+        },
+        "companyTla": {
+            "value": "TKU2" 
+        },
+        "allowAllConnections": {
+            "value": "true"
+        },
+        "sparkDeployment": {
+            "value": "true"
+        },
+        "sparkNodeSize": {
+            "value":"Small"
+        },
+        "deploymentType": {
+            "value": "poc"
+        },
+        "sqlAdministratorLogin": {
+            "value": "tkudemo" 
+        },
+        "sqlAdministratorLoginPassword": {
+            "value": "1128@Tku" 
+        },
+        "sku": {
+            "value": "DW100c"
+        },
+        "metadataSync": {
+            "value": false
+        },
+        "Frequency": {
+            "value": "Weekdays"
+        },
+        "TIME_ZONE": {
+            "value": "Eastern Standard Time"
+        },
+        "ResumeTime": {
+            "value": "09:00 PM ( 21:00 )"
+        },
+        "PauseTime": {
+            "value": "05:00 PM ( 17:00 )"
+        }
+    }
+}

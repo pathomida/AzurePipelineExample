@@ -11,6 +11,9 @@
         "defaultDataLakeStorageAccountName": {
             "type": "String"
         },
+        "defaultLinkedService": {
+            "type": "String"
+        },
         "defaultDataLakeStorageFilesystemName": {
             "type": "String"
         },
@@ -131,9 +134,9 @@
       }
     },
 		{
-			"name": "[concat(parameters('workSpaceName'), '/WorkspaceDefaultStorage')]",
+			"name": "[concat(parameters('workSpaceName'),'/',parameters('defaultLinkedService'))]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
+			"apiVersion":"2021-06-01-preview",
 			"properties": {
 				"annotations": [],
 				"type": "AzureBlobFS",
@@ -164,8 +167,23 @@
 							"timeToLive": 0
 						}
 					}
+				},
+            "managedVirtualNetwork": {
+					"type": "ManagedVirtualNetworkReference",
+					"referenceName": "default"
 				}
-			}
+			},
+			"dependsOn": [
+				"[parameters('workSpaceName')]",
+                "[concat(variables('workspaceId'), '/managedVirtualNetworks/default')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workSpaceName'), '/default')]",
+			"type": "Microsoft.Synapse/workspaces/managedVirtualNetworks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {},
+			"dependsOn": ["[parameters('workSpaceName')]"]
 		}
     ],
     "outputs": {}

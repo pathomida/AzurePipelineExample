@@ -19,6 +19,9 @@
         },
         "sparkPoolName": {
             "value": "smallsparkpool"
+        },
+        "defaultLinkedService": {
+            "value": "twseLinkedService"
         }
     }
 }
